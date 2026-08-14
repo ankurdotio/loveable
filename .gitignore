@@ -1,0 +1,9 @@
+.env
+.env*
+node_modules/
+dist/
+build/
+coverage/
+DS_Store
+.npm_cache
+secrets.yml

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  auth-deployment
+  labels:
+    name: auth-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app:  auth
+  template:
+    metadata:
+      labels:
+        app:  auth
+    spec:
+      containers:
+      - image:  auth-image
+        name:  auth-main
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "120m"
+            memory: "120M"
+          limits:
+            cpu: "250m"
+            memory: "250M"
+        livenessProbe:
+          httpGet:
+            path: /_status/healthz
+            port: 4000
+          initialDelaySeconds: 90
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_status/healthz
+            port: 4000
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+        env:
+        - name:  ACCESS_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name:  auth
+              key:  ACCESS_TOKEN_SECRET    
+        - name:  REFRESH_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name:  auth
+              key:  REFRESH_TOKEN_SECRET
+        - name:  MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name:  database
+              key:  AUTH_DB
+        - name:  ACCESS_TOKEN_EXPIRY
+          value:  15m
+        - name:  REFRESH_TOKEN_EXPIRY
+          value:  7d
+        - name:  PORT
+          value:  "4000"
+        ports:
+        - containerPort:  4000
+          name:  http
