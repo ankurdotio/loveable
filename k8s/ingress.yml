@@ -10,9 +10,18 @@ spec:
   - http:
       paths:
       - pathType: Prefix
-        path: "/"
+        path: "/api/auth"
         backend:
           service:
             name: auth-service
+            port: 
+              number: 80
+  - http:
+      paths:
+      - pathType: Prefix
+        path: "/api/projects"
+        backend:
+          service:
+            name: project-service
             port: 
               number: 80
