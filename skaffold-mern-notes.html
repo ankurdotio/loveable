@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skaffold + MERN Microservices</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,wght@0,300;0,600;0,700;0,900;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0E0F14;--paper:#F5F2EB;--paper2:#EDE9DF;--paper3:#E4DFD3;--rule:#D4CEBC;--muted:#6B6455;--accent:#C84B1F;--accent2:#1A6B4A;--accent3:#1B4587;--gold:#B8860B;--code-bg:#1A1C24;--code-text:#E2DCCC;--flag-c:#5BA4CF;--val-c:#F4A261}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14.5px;line-height:1.7}
+.layout{display:flex;min-height:100vh}
+nav{width:260px;flex-shrink:0;background:var(--ink);position:sticky;top:0;height:100vh;overflow-y:auto;padding:32px 0 40px}
+main{flex:1;max-width:calc(99% - 260px);padding:56px 56px 80px}
+@media(max-width:768px){nav{display:none}main{max-width:100%;padding:32px 24px 60px}}
+.nav-brand{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:20px}
+.nav-brand .logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.nav-brand .logo span{color:var(--accent)}
+.nav-brand .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.06em}
+.nav-group-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;padding:16px 24px 6px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 24px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:rgba(255,255,255,.5);text-decoration:none;border-left:2px solid transparent;transition:all .15s}
+nav a:hover{color:#fff;background:rgba(255,255,255,.04)}
+nav a.active{color:#fff;border-left-color:var(--accent);background:rgba(200,75,31,.08)}
+.nav-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:rgba(255,255,255,.08);font-family:'IBM Plex Mono',monospace;font-size:9px;border-radius:4px;flex-shrink:0;transition:all .15s}
+nav a:hover .nav-num,nav a.active .nav-num{background:var(--accent);color:#fff}
+.hero{margin-bottom:64px;padding-bottom:40px;border-bottom:1px solid var(--rule)}
+.hero-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,52px);font-weight:900;color:var(--ink);line-height:1.05;letter-spacing:-.02em;margin-bottom:20px}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero-desc{font-size:16px;color:var(--muted);max-width:560px;line-height:1.65;margin-bottom:20px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px}
+.hero-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);border:1px solid var(--rule);border-radius:20px;padding:3px 10px}
+.section{margin-bottom:72px;animation:fadeUp .4s ease both}
+.section-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px}
+.section-num-big{font-family:'Fraunces',serif;font-size:48px;font-weight:900;color:var(--rule);line-height:1;user-select:none;flex-shrink:0;margin-top:-4px}
+.section-title{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1.2}
+.section-subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+h3{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);margin:28px 0 12px}
+p{color:#2A2720;margin-bottom:12px}
+code{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);background:var(--paper3);border:1px solid var(--rule);border-radius:4px;padding:1px 5px}
+.concept{background:var(--paper2);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0}
+.concept-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--accent3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px}
+.concept p{font-size:14px;line-height:1.65;margin:0}
+.note{background:#FEF9EC;border:1px solid #EDD97A;border-radius:8px;padding:14px 16px;margin:16px 0;display:flex;gap:10px}
+.note p{margin:0;color:#5C4A00;font-size:13px}
+.note strong{color:#3D3000}
+.warn{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:14px 16px;margin:16px 0;display:flex;gap:10px}
+.warn p{margin:0;color:#7F1D1D;font-size:13px}
+.note-icon{font-size:16px;flex-shrink:0;line-height:1.5}
+.step-label{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.06em;background:var(--accent);padding:3px 10px;border-radius:4px;margin:16px 0 10px}
+.step-label.green{background:var(--accent2)}
+.step-label.blue{background:var(--accent3)}
+.step-label.gold{background:var(--gold)}
+.code-wrap{background:var(--code-bg);border-radius:8px;overflow:hidden;margin:16px 0}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06)}
+.code-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em}
+.copy-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);background:none;border:1px solid rgba(255,255,255,.1);border-radius:3px;padding:2px 8px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.copy-btn.copied{color:#98C379;border-color:#98C379}
+pre{padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.75;color:var(--code-text);overflow-x:auto;white-space:pre}
+.c-cmd{color:#87CEEB;font-weight:bold}
+.c-flag{color:#5BA4CF}
+.c-val{color:#F4A261}
+.c-str{color:#98C379}
+.c-comment{color:rgba(255,255,255,.28);font-style:italic}
+.c-key{color:#C678DD}
+.c-pipe{color:#E5C07B}
+.flag-table{width:100%;border-collapse:collapse;margin:16px 0}
+.flag-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;background:var(--paper3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--rule)}
+.flag-table td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+.flag-table tr:hover td{background:var(--paper2)}
+.f-name{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--flag-c)}
+.f-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--val-c)}
+.f-desc{font-size:13px;color:var(--ink)}
+.compare{width:100%;border-collapse:collapse;margin:16px 0}
+.compare th{background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:11px 14px;text-align:left}
+.compare th:first-child{border-radius:8px 0 0 0}
+.compare th:last-child{border-radius:0 8px 0 0}
+.compare td{padding:10px 14px;border-bottom:1px solid var(--rule);font-size:13px;vertical-align:top}
+.compare tr:hover td{background:var(--paper2)}
+.row-label{font-weight:600;color:var(--ink)}
+.local-val{color:var(--muted)}
+.eks-val{color:var(--accent2);font-weight:500}
+.flow{margin:16px 0}
+.flow-step{display:flex;gap:14px}
+.flow-line{display:flex;flex-direction:column;align-items:center;width:10px;flex-shrink:0;padding-top:4px}
+.flow-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.flow-connector{flex:1;width:2px;background:var(--rule);min-height:24px;margin:4px 0}
+.flow-content{padding-bottom:20px}
+.flow-title{font-size:14px;font-weight:600;color:var(--ink)}
+.flow-detail{font-size:12.5px;color:var(--muted);margin-top:3px}
+.scale-diagram{background:var(--paper2);border:1px solid var(--rule);border-radius:10px;padding:20px 24px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:2;color:var(--muted);margin:16px 0}
+.scale-diagram .hi{color:var(--ink);font-weight:bold}
+.scale-diagram .green{color:var(--accent2)}
+.scale-diagram .red{color:var(--accent)}
+.tree{background:var(--code-bg);border-radius:8px;padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.9;color:var(--code-text);margin:16px 0;overflow-x:auto}
+.tree .dir{color:#87CEEB;font-weight:bold}
+.tree .key-file{color:#F4A261;font-weight:bold}
+.tree .cm{color:rgba(255,255,255,.28);font-style:italic}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:20px 0 0;border-top:2px solid var(--rule);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-top:40px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.section:nth-child(2){animation-delay:.05s}
+.section:nth-child(3){animation-delay:.1s}
+.section:nth-child(4){animation-delay:.15s}
+.section:nth-child(5){animation-delay:.2s}
+.section:nth-child(6){animation-delay:.25s}
+.section:nth-child(7){animation-delay:.3s}
+.section:nth-child(8){animation-delay:.35s}
+.section:nth-child(9){animation-delay:.4s}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="nav-brand">
+    <div class="logo">Skaffold<span>.</span>Dev</div>
+    <div class="sub">MERN Microservices Setup</div>
+  </div>
+  <div class="nav-group-label">Getting Started</div>
+  <a href="#install" class="active"><span class="nav-num">1</span>Install Skaffold</a>
+  <a href="#structure"><span class="nav-num">2</span>Project Structure</a>
+  <div class="nav-group-label">Configuration</div>
+  <a href="#dockerfiles"><span class="nav-num">3</span>Dockerfiles</a>
+  <a href="#k8s"><span class="nav-num">4</span>K8s Manifests</a>
+  <a href="#skaffold-yaml"><span class="nav-num">5</span>skaffold.yaml</a>
+  <div class="nav-group-label">Dev Workflow</div>
+  <a href="#running"><span class="nav-num">6</span>Running Skaffold</a>
+  <a href="#sync"><span class="nav-num">7</span>Sync vs Rebuild</a>
+  <a href="#packages"><span class="nav-num">8</span>New Packages</a>
+  <a href="#debug"><span class="nav-num">9</span>Debugging</a>
+</nav>
+<main>
+
+<div class="hero">
+  <div class="hero-eyebrow">Local Kubernetes Development</div>
+  <h1>Skaffold + <em>MERN</em><br>Microservices</h1>
+  <p class="hero-desc">Complete setup guide for running a MERN microservices stack locally with Kubernetes, hot reload, and automated file sync using Skaffold.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">skaffold/v4beta13</span>
+    <span class="hero-tag">Docker Desktop K8s</span>
+    <span class="hero-tag">Node.js + Express</span>
+    <span class="hero-tag">nginx Ingress</span>
+    <span class="hero-tag">Hot Reload</span>
+  </div>
+</div>
+
+<!-- 01 -->
+<section class="section" id="install">
+  <div class="section-header">
+    <div class="section-num-big">01</div>
+    <div class="section-title-block">
+      <div class="section-title">Install Skaffold</div>
+      <div class="section-subtitle">Get Skaffold running alongside Docker Desktop Kubernetes</div>
+    </div>
+  </div>
+  <div class="concept">
+    <div class="concept-label">Key Concept</div>
+    <p><strong>Skaffold</strong> watches your files and either syncs changes directly into running containers or triggers a full rebuild — automatically deciding which is faster and appropriate.</p>
+  </div>
+  <div class="step-label">Step 1 — Install</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-comment"># macOS</span>
+<span class="c-cmd">brew</span> install skaffold
+
+<span class="c-comment"># Windows</span>
+<span class="c-cmd">choco</span> install skaffold
+
+<span class="c-comment"># Linux</span>
+<span class="c-cmd">curl</span> <span class="c-flag">-Lo</span> skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
+<span class="c-cmd">chmod</span> <span class="c-flag">+x</span> skaffold <span class="c-pipe">&amp;&amp;</span> <span class="c-cmd">sudo mv</span> skaffold /usr/local/bin</pre>
+  </div>
+  <div class="step-label green">Verify</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">skaffold</span> version
+<span class="c-cmd">kubectl</span> config use-context docker-desktop
+<span class="c-cmd">kubectl</span> get nodes  <span class="c-comment"># should show 1 node Ready</span></pre>
+  </div>
+  <div class="note"><div class="note-icon">💡</div><p>Enable Kubernetes first: Docker Desktop → <strong>Settings → Kubernetes → Enable Kubernetes</strong>.</p></div>
+</section>
+
+<!-- 02 -->
+<section class="section" id="structure">
+  <div class="section-header">
+    <div class="section-num-big">02</div>
+    <div class="section-title-block">
+      <div class="section-title">Project Structure</div>
+      <div class="section-subtitle">How to organise your microservices for Skaffold</div>
+    </div>
+  </div>
+  <div class="tree">
+<span class="dir">mern-app/</span>
+<br>├── <span class="key-file">skaffold.yaml</span>            <span class="cm">← Skaffold config (project root)</span>
+<br>├── <span class="dir">core/</span>
+<br>│   ├── <span class="key-file">dockerfile.dev</span>
+<br>│   ├── <span class="key-file">.dockerignore</span>            <span class="cm">← critical: excludes node_modules</span>
+<br>│   ├── <span class="key-file">nodemon.json</span>
+<br>│   ├── package.json
+<br>│   └── <span class="dir">src/</span>
+<br>│       └── index.js
+<br>├── <span class="dir">notification/</span>
+<br>│   ├── <span class="key-file">dockerfile.dev</span>
+<br>│   ├── <span class="key-file">.dockerignore</span>
+<br>│   ├── <span class="key-file">nodemon.json</span>
+<br>│   ├── package.json
+<br>│   └── <span class="dir">src/</span>
+<br>│       └── index.js
+<br>└── <span class="dir">k8s/</span>
+<br>    ├── core-deployment.yml
+<br>    ├── core-service.yml
+<br>    ├── notification-deployment.yml
+<br>    ├── notification-service.yml
+<br>    └── ingress.yml</div>
+  <div class="note"><div class="note-icon">💡</div><p>Each service is its own <strong>build context</strong>. Sync <code>src</code> paths are <strong>relative to the service folder</strong>, not the project root — this is the most common config mistake.</p></div>
+</section>
+
+<!-- 03 -->
+<section class="section" id="dockerfiles">
+  <div class="section-header">
+    <div class="section-num-big">03</div>
+    <div class="section-title-block">
+      <div class="section-title">Dockerfiles &amp; Config</div>
+      <div class="section-subtitle">Dev Dockerfiles with layer caching and nodemon for hot reload</div>
+    </div>
+  </div>
+  <div class="concept">
+    <div class="concept-label">Layer Caching</div>
+    <p>Copy <code>package.json</code> first, run <code>npm install</code>, then copy source code. Docker caches the install layer — when only <code>.js</code> files change, the install step is skipped and rebuilds take ~5s instead of ~60s.</p>
+  </div>
+  <h3>dockerfile.dev</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">core/dockerfile.dev &nbsp;|&nbsp; notification/dockerfile.dev</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-key">FROM</span> node:18-alpine
+<span class="c-key">WORKDIR</span> /app
+
+<span class="c-comment"># Cached layer — only re-runs when package.json changes</span>
+<span class="c-key">COPY</span> package*.json ./
+<span class="c-key">RUN</span> npm install
+
+<span class="c-comment"># Source code layer</span>
+<span class="c-key">COPY</span> . .
+
+<span class="c-key">EXPOSE</span> 3000
+<span class="c-key">CMD</span> ["npx", "nodemon", "src/index.js"]</pre>
+  </div>
+  <h3>.dockerignore</h3>
+  <div class="warn"><div class="note-icon">⚠️</div><p><strong>Without .dockerignore</strong>, Skaffold watches node_modules too — any change triggers a full rebuild. This is the #1 cause of unnecessary rebuilds.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">core/.dockerignore &nbsp;|&nbsp; notification/.dockerignore</span></div>
+    <pre>node_modules
+.git
+*.log
+.env
+dist
+build
+.DS_Store</pre>
+  </div>
+  <h3>nodemon.json</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">core/nodemon.json &nbsp;|&nbsp; notification/nodemon.json</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre>{
+  <span class="c-key">"watch"</span>: [<span class="c-str">"src"</span>],
+  <span class="c-key">"ext"</span>: <span class="c-str">"js,json"</span>,
+  <span class="c-key">"ignore"</span>: [<span class="c-str">"node_modules"</span>],
+  <span class="c-key">"delay"</span>: <span class="c-val">500</span>,
+  <span class="c-key">"legacyWatch"</span>: <span class="c-val">true</span>  <span class="c-comment">// required inside containers</span>
+}</pre>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="section" id="k8s">
+  <div class="section-header">
+    <div class="section-num-big">04</div>
+    <div class="section-title-block">
+      <div class="section-title">Kubernetes Manifests</div>
+      <div class="section-subtitle">Deployments, Services and Ingress for both microservices</div>
+    </div>
+  </div>
+  <h3>core-deployment.yml</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">k8s/core-deployment.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-key">apiVersion</span>: apps/v1
+<span class="c-key">kind</span>: Deployment
+<span class="c-key">metadata</span>:
+  <span class="c-key">name</span>: core-deployment
+<span class="c-key">spec</span>:
+  <span class="c-key">replicas</span>: <span class="c-val">2</span>
+  <span class="c-key">selector</span>:
+    <span class="c-key">matchLabels</span>:
+      <span class="c-key">app</span>: core
+  <span class="c-key">template</span>:
+    <span class="c-key">metadata</span>:
+      <span class="c-key">labels</span>:
+        <span class="c-key">app</span>: core
+    <span class="c-key">spec</span>:
+      <span class="c-key">containers</span>:
+        - <span class="c-key">name</span>: core
+          <span class="c-key">image</span>: core:latest
+          <span class="c-key">imagePullPolicy</span>: IfNotPresent  <span class="c-comment"># use local image, never pull</span>
+          <span class="c-key">ports</span>:
+            - <span class="c-key">containerPort</span>: <span class="c-val">3000</span>
+          <span class="c-key">resources</span>:
+            <span class="c-key">limits</span>:
+              <span class="c-key">memory</span>: <span class="c-str">"128Mi"</span>
+              <span class="c-key">cpu</span>: <span class="c-str">"500m"</span>
+            <span class="c-key">requests</span>:
+              <span class="c-key">memory</span>: <span class="c-str">"64Mi"</span>
+              <span class="c-key">cpu</span>: <span class="c-str">"250m"</span></pre>
+  </div>
+  <h3>core-service.yml</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">k8s/core-service.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-key">apiVersion</span>: v1
+<span class="c-key">kind</span>: Service
+<span class="c-key">metadata</span>:
+  <span class="c-key">name</span>: core-service
+<span class="c-key">spec</span>:
+  <span class="c-key">selector</span>:
+    <span class="c-key">app</span>: core
+  <span class="c-key">type</span>: ClusterIP
+  <span class="c-key">ports</span>:
+    - <span class="c-key">name</span>: core-port
+      <span class="c-key">port</span>: <span class="c-val">80</span>
+      <span class="c-key">targetPort</span>: <span class="c-val">3000</span></pre>
+  </div>
+  <h3>ingress.yml</h3>
+  <div class="note"><div class="note-icon">💡</div><p>Install nginx Ingress Controller first. See Section 06 for the install command. Check with: <code>kubectl get pods -n ingress-nginx</code>.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">k8s/ingress.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-key">apiVersion</span>: networking.k8s.io/v1
+<span class="c-key">kind</span>: Ingress
+<span class="c-key">metadata</span>:
+  <span class="c-key">name</span>: queue-ingress
+  <span class="c-key">annotations</span>:
+    <span class="c-key">nginx.ingress.kubernetes.io/rewrite-target</span>: /
+<span class="c-key">spec</span>:
+  <span class="c-key">ingressClassName</span>: nginx
+  <span class="c-key">rules</span>:
+    - <span class="c-key">http</span>:
+        <span class="c-key">paths</span>:
+          - <span class="c-key">pathType</span>: Prefix
+            <span class="c-key">path</span>: <span class="c-str">"/"</span>
+            <span class="c-key">backend</span>:
+              <span class="c-key">service</span>:
+                <span class="c-key">name</span>: core-service
+                <span class="c-key">port</span>:
+                  <span class="c-key">number</span>: <span class="c-val">80</span>
+          - <span class="c-key">pathType</span>: Prefix
+            <span class="c-key">path</span>: <span class="c-str">"/api/notification"</span>
+            <span class="c-key">backend</span>:
+              <span class="c-key">service</span>:
+                <span class="c-key">name</span>: notification-service
+                <span class="c-key">port</span>:
+                  <span class="c-key">number</span>: <span class="c-val">80</span></pre>
+  </div>
+  <table class="flag-table">
+    <thead><tr><th>Field</th><th>Value</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td><span class="f-name">imagePullPolicy</span></td><td><span class="f-val">IfNotPresent</span></td><td class="f-desc">Uses the locally built image — never tries to pull from a remote registry.</td></tr>
+      <tr><td><span class="f-name">ingressClassName</span></td><td><span class="f-val">nginx</span></td><td class="f-desc">Selects the nginx controller. Without this, ingress rules are ignored → 404.</td></tr>
+      <tr><td><span class="f-name">rewrite-target</span></td><td><span class="f-val">/</span></td><td class="f-desc">Strips path prefix before forwarding. <code>/api/notification/x</code> becomes <code>/x</code> inside the container.</td></tr>
+      <tr><td><span class="f-name">type: ClusterIP</span></td><td><span class="f-val">ClusterIP</span></td><td class="f-desc">Services only accessible inside the cluster. External traffic goes through Ingress only.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 05 -->
+<section class="section" id="skaffold-yaml">
+  <div class="section-header">
+    <div class="section-num-big">05</div>
+    <div class="section-title-block">
+      <div class="section-title">skaffold.yaml</div>
+      <div class="section-subtitle">The heart of your setup — build, sync, and deploy config</div>
+    </div>
+  </div>
+  <div class="warn"><div class="note-icon">⚠️</div><p><strong>Cannot mix <code>infer</code> and <code>manual</code> in the same sync block.</strong> Use only one per artifact. For backend Node services use <code>manual</code> — you control the exact destination path explicitly.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">skaffold.yaml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-key">apiVersion</span>: skaffold/v4beta13
+<span class="c-key">kind</span>: Config
+<span class="c-key">metadata</span>:
+  <span class="c-key">name</span>: mern-app
+
+<span class="c-comment"># ── Build ──────────────────────────────────────────</span>
+<span class="c-key">build</span>:
+  <span class="c-key">local</span>:
+    <span class="c-key">push</span>: <span class="c-val">false</span>        <span class="c-comment"># use local images, don't push to registry</span>
+  <span class="c-key">artifacts</span>:
+
+    - <span class="c-key">image</span>: core
+      <span class="c-key">context</span>: core      <span class="c-comment"># build context = ./core folder</span>
+      <span class="c-key">docker</span>:
+        <span class="c-key">dockerfile</span>: dockerfile.dev
+      <span class="c-key">sync</span>:
+        <span class="c-key">manual</span>:             <span class="c-comment"># paths are relative to ./core context</span>
+          - <span class="c-key">src</span>: <span class="c-str">'**/*.js'</span>     <span class="c-comment"># NOT 'core/**/*.js' ← that would fail</span>
+            <span class="c-key">dest</span>: /app
+          - <span class="c-key">src</span>: <span class="c-str">'**/*.json'</span>
+            <span class="c-key">dest</span>: /app
+
+    - <span class="c-key">image</span>: notification
+      <span class="c-key">context</span>: notification
+      <span class="c-key">docker</span>:
+        <span class="c-key">dockerfile</span>: dockerfile.dev
+      <span class="c-key">sync</span>:
+        <span class="c-key">manual</span>:
+          - <span class="c-key">src</span>: <span class="c-str">'**/*.js'</span>
+            <span class="c-key">dest</span>: /app
+          - <span class="c-key">src</span>: <span class="c-str">'**/*.json'</span>
+            <span class="c-key">dest</span>: /app
+
+<span class="c-comment"># ── Manifests ──────────────────────────────────────</span>
+<span class="c-key">manifests</span>:
+  <span class="c-key">rawYaml</span>:
+    - k8s/core-deployment.yml
+    - k8s/notification-deployment.yml
+    - k8s/core-service.yml
+    - k8s/notification-service.yml
+    - k8s/ingress.yml
+
+<span class="c-comment"># ── Port Forwarding ────────────────────────────────</span>
+<span class="c-key">portForward</span>:
+  - <span class="c-key">resourceType</span>: service
+    <span class="c-key">resourceName</span>: core-service
+    <span class="c-key">port</span>: <span class="c-val">80</span>
+    <span class="c-key">localPort</span>: <span class="c-val">3000</span>
+  - <span class="c-key">resourceType</span>: service
+    <span class="c-key">resourceName</span>: notification-service
+    <span class="c-key">port</span>: <span class="c-val">80</span>
+    <span class="c-key">localPort</span>: <span class="c-val">4000</span></pre>
+  </div>
+  <div class="concept">
+    <div class="concept-label">Why src: '**/*.js' not 'core/**/*.js'</div>
+    <p>The <code>src</code> path in manual sync is <strong>relative to the build context</strong>. Since <code>context: core</code>, Skaffold is already inside the <code>core/</code> folder. Writing <code>core/**/*.js</code> would look for <code>core/core/file.js</code> — which doesn't exist — so every save triggers a full rebuild instead of a fast sync.</p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="section" id="running">
+  <div class="section-header">
+    <div class="section-num-big">06</div>
+    <div class="section-title-block">
+      <div class="section-title">Running Skaffold</div>
+      <div class="section-subtitle">Start the dev loop and verify everything is working</div>
+    </div>
+  </div>
+  <div class="step-label">Step 1 — Install nginx Ingress Controller</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">kubectl</span> apply -f \
+  https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/cloud/deploy.yaml
+
+<span class="c-cmd">kubectl</span> wait <span class="c-flag">--namespace</span> ingress-nginx \
+  <span class="c-flag">--for=condition=ready</span> pod \
+  <span class="c-flag">--selector=</span>app.kubernetes.io/component=controller \
+  <span class="c-flag">--timeout=</span>90s</pre>
+  </div>
+  <div class="step-label">Step 2 — Start Skaffold</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">kubectl</span> config use-context docker-desktop
+
+<span class="c-cmd">skaffold</span> dev                    <span class="c-comment"># standard dev loop</span>
+<span class="c-cmd">skaffold</span> dev <span class="c-flag">--verbosity=info</span>    <span class="c-comment"># see sync vs rebuild decisions</span>
+<span class="c-cmd">skaffold</span> dev <span class="c-flag">--tail</span>             <span class="c-comment"># stream all pod logs</span></pre>
+  </div>
+  <div class="step-label green">Verify</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">kubectl</span> get pods      <span class="c-comment"># all pods Running</span>
+<span class="c-cmd">kubectl</span> get services  <span class="c-comment"># core-service, notification-service</span>
+<span class="c-cmd">kubectl</span> get ingress   <span class="c-comment"># queue-ingress with ADDRESS</span></pre>
+  </div>
+  <table class="compare">
+    <thead><tr><th>Service</th><th>Via Ingress</th><th>Via Port-Forward</th></tr></thead>
+    <tbody>
+      <tr><td class="row-label">Core API</td><td class="local-val">http://localhost/</td><td class="eks-val">http://localhost:3000 ✓</td></tr>
+      <tr><td class="row-label">Notification API</td><td class="local-val">http://localhost/api/notification</td><td class="eks-val">http://localhost:4000 ✓</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 07 -->
+<section class="section" id="sync">
+  <div class="section-header">
+    <div class="section-num-big">07</div>
+    <div class="section-title-block">
+      <div class="section-title">Sync vs Rebuild</div>
+      <div class="section-subtitle">When Skaffold syncs files instantly vs triggers a full image rebuild</div>
+    </div>
+  </div>
+  <div class="scale-diagram">
+<span class="hi">Save core/src/routes/user.js</span>
+    ↓
+<span class="green">Matches sync rule: **/*.js → /app</span>
+    ↓
+<span class="green">File copied directly into running pod</span>
+    ↓
+<span class="green">nodemon detects change → server restarts 🔥</span>
+    ↓
+<span class="green">~1 second total. No rebuild.</span></div>
+
+  <div class="scale-diagram">
+<span class="hi">npm install express-validator</span>
+    ↓
+<span class="hi">package.json updated</span>
+    ↓
+<span class="red">node_modules changed — not in sync rules</span>
+    ↓
+<span class="red">Skaffold triggers full image rebuild</span>
+    ↓
+<span class="green">Docker layer cache: only npm install layer reruns</span>
+    ↓
+<span class="green">~5-10s with caching ✓</span></div>
+
+  <table class="flag-table">
+    <thead><tr><th>File Changed</th><th>Action</th><th>Speed</th></tr></thead>
+    <tbody>
+      <tr><td><span class="f-name">src/**/*.js</span></td><td class="f-desc">Synced directly into pod. nodemon restarts.</td><td><span class="f-val">~1s 🔥</span></td></tr>
+      <tr><td><span class="f-name">src/**/*.json</span></td><td class="f-desc">Synced directly into pod.</td><td><span class="f-val">~1s 🔥</span></td></tr>
+      <tr><td><span class="f-name">package.json</span></td><td class="f-desc">Full rebuild. Docker uses cached npm install layer.</td><td><span class="f-val">~5-10s</span></td></tr>
+      <tr><td><span class="f-name">dockerfile.dev</span></td><td class="f-desc">Full rebuild, no layer cache.</td><td><span class="f-val">~60s</span></td></tr>
+    </tbody>
+  </table>
+  <div class="step-label blue">Debug sync</div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">skaffold</span> dev <span class="c-flag">--verbosity=debug</span> <span class="c-pipe">2&gt;&amp;1</span> <span class="c-pipe">|</span> <span class="c-cmd">grep</span> <span class="c-flag">-E</span> <span class="c-str">"sync|rebuild|build"</span>
+
+<span class="c-comment"># Good — sync working:</span>
+<span class="c-comment"># Syncing 1 files for core:latest ✅</span>
+
+<span class="c-comment"># Bad — unnecessary rebuild:</span>
+<span class="c-comment"># Building [core]... ← file wasn't matched by sync rule</span></pre>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="section" id="packages">
+  <div class="section-header">
+    <div class="section-num-big">08</div>
+    <div class="section-title-block">
+      <div class="section-title">Installing New Packages</div>
+      <div class="section-subtitle">Correct workflow for adding npm dependencies while Skaffold is running</div>
+    </div>
+  </div>
+  <div class="concept">
+    <div class="concept-label">Key Concept</div>
+    <p>When you run <code>npm install</code>, <code>node_modules</code> changes locally — but it's excluded from sync rules. Skaffold detects the <code>package.json</code> change and triggers a full image rebuild so the package gets installed <em>inside the container</em>.</p>
+  </div>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Run npm install in the service folder</div>
+        <div class="flow-detail"><code>cd core &amp;&amp; npm install express-validator</code></div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">package.json updates automatically</div>
+        <div class="flow-detail">Skaffold is watching and detects the change immediately</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Skaffold triggers a full rebuild</div>
+        <div class="flow-detail">Docker layer cache: only the npm install layer reruns (~5-10s)</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot" style="background:var(--accent2)"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">New package available in container ✅</div>
+        <div class="flow-detail">Pod restarts automatically with updated node_modules</div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><div class="note-icon">💡</div><p>If Skaffold doesn't auto-detect: <code>Ctrl+C</code> then <code>skaffold dev</code>. Or in another terminal: <code>skaffold build</code>.</p></div>
+</section>
+
+<!-- 09 -->
+<section class="section" id="debug">
+  <div class="section-header">
+    <div class="section-num-big">09</div>
+    <div class="section-title-block">
+      <div class="section-title">Common Issues &amp; Debugging</div>
+      <div class="section-subtitle">Quick fixes for the most frequent Skaffold and Kubernetes problems</div>
+    </div>
+  </div>
+  <table class="flag-table">
+    <thead><tr><th>Error</th><th>Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td><span class="f-name">ImagePullBackOff</span></td><td class="f-desc">K8s trying to pull from remote registry</td><td class="f-desc">Set <code>imagePullPolicy: IfNotPresent</code> in deployment</td></tr>
+      <tr><td><span class="f-name">404 nginx</span></td><td class="f-desc">Ingress class missing or wrong port</td><td class="f-desc">Add <code>ingressClassName: nginx</code>, verify service ports match</td></tr>
+      <tr><td><span class="f-name">Rebuilds every save</span></td><td class="f-desc">Wrong src pattern or missing .dockerignore</td><td class="f-desc">Use <code>**/*.js</code> (not <code>core/**/*.js</code>), add .dockerignore to each service</td></tr>
+      <tr><td><span class="f-name">sync + infer error</span></td><td class="f-desc">Both sync types on same artifact</td><td class="f-desc">Use only <code>manual</code> OR <code>infer</code> per artifact — never both</td></tr>
+    </tbody>
+  </table>
+  <h3>Useful Commands</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-label">Terminal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="c-cmd">skaffold</span> dev                    <span class="c-comment"># start dev loop</span>
+<span class="c-cmd">skaffold</span> dev <span class="c-flag">--tail</span>             <span class="c-comment"># dev loop + stream all pod logs</span>
+<span class="c-cmd">skaffold</span> dev <span class="c-flag">--verbosity=info</span>    <span class="c-comment"># see sync vs rebuild decisions</span>
+<span class="c-cmd">skaffold</span> build                   <span class="c-comment"># rebuild images only, no deploy</span>
+<span class="c-cmd">skaffold</span> delete                  <span class="c-comment"># tear down all K8s resources</span>
+<span class="c-cmd">skaffold</span> render                  <span class="c-comment"># preview final K8s YAML output</span>
+
+<span class="c-comment"># Pod debugging</span>
+<span class="c-cmd">kubectl</span> logs <span class="c-flag">-f</span> deploy/core-deployment
+<span class="c-cmd">kubectl</span> exec <span class="c-flag">-it</span> deploy/core-deployment <span class="c-pipe">--</span> /bin/sh
+<span class="c-cmd">kubectl</span> describe pod &lt;pod-name&gt;</pre>
+  </div>
+</section>
+
+<footer>
+  <span>Skaffold · MERN Microservices Setup Notes</span>
+  <span>skaffold/v4beta13 · Docker Desktop K8s · nginx Ingress</span>
+</footer>
+
+</main>
+</div>
+<script>
+function copyCode(btn){
+  const pre=btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('copied')},2000);
+  });
+}
+const sections=document.querySelectorAll('.section');
+const navLinks=document.querySelectorAll('nav a');
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) navLinks.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));
+  });
+},{threshold:0.3});
+sections.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

@@ -7,6 +7,17 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
+
+  - host: "*.preview.localhost"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: project-service
+            port:
+              number: 80
   - http:
       paths:
       - pathType: Prefix
@@ -25,3 +36,5 @@ spec:
             name: project-service
             port: 
               number: 80
+
+  

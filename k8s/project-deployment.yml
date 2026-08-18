@@ -17,15 +17,15 @@ spec:
       serviceAccountName: resource-manager
       containers:
       - image:  project-service-image
-        name:  project-main-container
+        name:  project-main-container 
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "120m"
-            memory: "120M"
-          limits:
             cpu: "250m"
             memory: "250M"
+          limits:
+            cpu: "500m"
+            memory: "500M"
         livenessProbe:
           httpGet:
             path: /_status/healthz
