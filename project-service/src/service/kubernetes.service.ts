@@ -1,5 +1,4 @@
 import * as k8s from "@kubernetes/client-node"
-import { response } from "express";
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -85,4 +84,39 @@ export async function createService(serviceName: string, podName: string) {
 
     console.log('Service successfully created!');
     console.log(response);
+}
+
+/** True when the Kubernetes API rejected the request because the object is gone. */
+function isNotFound(error: unknown) {
+    return (error as { code?: number })?.code === 404
+}
+
+/**
+ * Deletes a preview pod, treating an already-deleted pod as success.
+ *
+ * @param podName Name of the pod in the `default` namespace.
+ */
+export async function deletePod(podName: string) {
+    try {
+        await k8sApi.deleteNamespacedPod({ namespace: "default", name: podName })
+        console.log(`Pod ${podName} deleted`)
+    } catch (error) {
+        if (isNotFound(error)) return
+        throw error
+    }
+}
+
+/**
+ * Deletes a preview service, treating an already-deleted service as success.
+ *
+ * @param serviceName Name of the service in the `default` namespace.
+ */
+export async function deleteService(serviceName: string) {
+    try {
+        await k8sApi.deleteNamespacedService({ namespace: "default", name: serviceName })
+        console.log(`Service ${serviceName} deleted`)
+    } catch (error) {
+        if (isNotFound(error)) return
+        throw error
+    }
 }

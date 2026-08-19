@@ -25,6 +25,7 @@
     "express": "^5.2.1",
     "express-http-proxy": "^2.1.2",
     "http-proxy-middleware": "^4.2.0",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "uuid": "^14.0.1"

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express"
 import { createPod, createService } from "../service/kubernetes.service.js"
+import { recordActivity } from "../service/activity.service.js"
 import { v4 as uuid } from "uuid"
 
 export const createPodController = async (req: Request, res: Response) => {
@@ -11,6 +12,7 @@ export const createPodController = async (req: Request, res: Response) => {
 
     await createPod(podName)
     await createService(serviceName, podName)
+    await recordActivity(uniqueId)
 
     res.status(200).json({
         message: "Pod created successfully",
