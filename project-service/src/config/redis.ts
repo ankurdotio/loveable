@@ -12,7 +12,6 @@ redis.on("error", (err) => console.error("[redis] client error:", err.message))
 redisSubscriber.on("error", (err) => console.error("[redis] subscriber error:", err.message))
 
 
-
 redis.once("ready", () => {
     console.log("[redis] client connected")
 })

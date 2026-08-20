@@ -18,6 +18,25 @@ export async function createPod(podName: string) {
             }
         },
         spec: {
+            volumes: [
+                {
+                    name: 'app-volume',
+                    emptyDir: {} // This creates an empty directory for the pod
+                }
+            ],
+            initContainers: [
+                {
+                    name: 'init-container',
+                    image: "nextjs-boilerplate",
+                    command: ['sh', '-c', 'mkdir -p /app-copy && cp -r /app/* /app-copy'],
+                    volumeMounts: [
+                        {
+                            name: 'app-volume',
+                            mountPath: '/app-copy'
+                        }
+                    ]
+                }
+            ],
             containers: [
                 {
                     name: 'nextjs-container',
@@ -36,7 +55,38 @@ export async function createPod(podName: string) {
                             memory: '2048Mi',  // Maximum memory allowed before OOMKilled
                             cpu: '1000m'       // Maximum CPU allowed before throttling
                         }
-                    }
+                    },
+                    volumeMounts: [
+                        {
+                            name: 'app-volume',
+                            mountPath: '/app'
+                        }
+                    ]
+                },
+                {
+                    name: 'file-server-container',
+                    image: 'express-file-server',
+                    ports: [
+                        {
+                            containerPort: 8080
+                        }
+                    ],
+                    resources: {
+                        requests: {
+                            memory: '512Mi',   // Minimum memory guaranteed
+                            cpu: '250m'       // Minimum CPU guaranteed (0.25 cores)
+                        },
+                        limits: {
+                            memory: '1024Mi',  // Maximum memory allowed before OOMKilled
+                            cpu: '500m'       // Maximum CPU allowed before throttling
+                        }
+                    },
+                    volumeMounts: [
+                        {
+                            name: 'app-volume',
+                            mountPath: '/app'
+                        }
+                    ]
                 }
             ]
         }
@@ -68,9 +118,16 @@ export async function createService(serviceName: string, podName: string) {
             },
             ports: [
                 {
+                    name: 'preview-port',
                     protocol: 'TCP',
                     port: 80,
                     targetPort: 3000
+                },
+                {
+                    name: 'file-server-port',
+                    protocol: 'TCP',
+                    port: 8000,
+                    targetPort: 8080
                 }
             ],
             type: 'LoadBalancer'

@@ -10,6 +10,7 @@ const app = express()
 
 /** Cached proxy middleware per preview id, keyed by `uniqueId`. */
 const proxyMap: { [key: string]: Function } = {}
+const proxyMapForFiles: { [key: string]: Function } = {}
 
 // A reaped preview's service no longer exists, so its cached proxy must go too.
 onPreviewReaped((uniqueId) => {
@@ -45,6 +46,29 @@ function getProxy(uniqueId: string) {
 }
 
 
+function getProxyForFiles(uniqueId: string) {
+
+    if (proxyMapForFiles[uniqueId]) {
+        return proxyMapForFiles[uniqueId]
+    }
+
+    const targetUrl = `http://nextjs-service-${uniqueId}:8000`
+
+    const proxyMiddleware = createProxyMiddleware({
+        target: targetUrl,
+        changeOrigin: true,
+        pathRewrite: {
+            '^/': '/', // Rewrite the path if needed
+        },
+    })
+
+    proxyMapForFiles[uniqueId] = proxyMiddleware
+
+    return proxyMiddleware
+
+}
+
+
 app.use(morgan("dev"))
 
 /**
@@ -61,7 +85,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
     console.log("Host:", host)
 
-    if (!host.includes("preview")) {
+    if (!host.includes("preview") && !host.includes("file-system")) {
         return next()
     }
 
@@ -74,7 +98,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
             message: "Invalid preview URL"
         })
     }
+
     void recordActivity(uniqueId)
+
+
+    if (host.includes("file-system")) {
+        recordActivity(uniqueId)
+        return getProxyForFiles(uniqueId)(req, res, next)
+    }
+    
     return getProxy(uniqueId)(req, res, next)
 })
 

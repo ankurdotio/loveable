@@ -18,6 +18,17 @@ spec:
             name: project-service
             port:
               number: 80
+              
+  - host: "*.file-system.localhost"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: project-service
+            port:
+              number: 80
   - http:
       paths:
       - pathType: Prefix
