@@ -1,0 +1,24 @@
+{
+  "name": "sync-service",
+  "version": "1.0.0",
+  "description": "Two-way sync between the project work folder and S3",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "chokidar": "^4.0.3"
+  }
+}
