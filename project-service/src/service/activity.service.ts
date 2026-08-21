@@ -1,4 +1,5 @@
 import { redis, redisSubscriber } from "../config/redis.js"
+import { Project } from "../models/project.model.js"
 import { deletePod, deleteService } from "./kubernetes.service.js"
 
 /**
@@ -87,6 +88,13 @@ async function reap(uniqueId: string) {
     try {
         await deleteService(`nextjs-service-${uniqueId}`)
         await deletePod(`nextjs-pod-${uniqueId}`)
+        await Project.updateOne(
+            { runtimeId: uniqueId },
+            {
+                $set: { status: "created" },
+                $unset: { runtimeId: 1, previewUrl: 1 }
+            }
+        )
         await redis.publish(REAPED_CHANNEL, uniqueId)
     } catch (error) {
         console.error(`[idle-reaper] failed to tear down ${uniqueId}:`, error)

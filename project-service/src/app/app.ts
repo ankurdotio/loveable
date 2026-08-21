@@ -4,6 +4,7 @@ import router from "./index.routes.js"
 import type { Request, Response, NextFunction } from "express"
 import { createProxyMiddleware } from "http-proxy-middleware"
 import { onPreviewReaped, recordActivity } from "../service/activity.service.js"
+import { errorHandler } from "../middlewares/error.middleware.js"
 
 
 const app = express()
@@ -15,6 +16,7 @@ const proxyMapForFiles: { [key: string]: Function } = {}
 // A reaped preview's service no longer exists, so its cached proxy must go too.
 onPreviewReaped((uniqueId) => {
     delete proxyMap[uniqueId]
+    delete proxyMapForFiles[uniqueId]
 })
 
 /**
@@ -70,6 +72,7 @@ function getProxyForFiles(uniqueId: string) {
 
 
 app.use(morgan("dev"))
+app.use(express.json())
 
 /**
  * Routes preview traffic to its pod.
@@ -125,5 +128,6 @@ app.get("/_status/readyz", (req: Request, res: Response) => {
     })
 })
 
+app.use(errorHandler)
 
 export default app

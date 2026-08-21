@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch --clear-screen=false ./src/server.ts"
+    "dev": "tsx watch --clear-screen=false ./src/server.ts",
+    "build": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/express-http-proxy": "^1.6.7",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
@@ -27,6 +29,7 @@
     "http-proxy-middleware": "^4.2.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.2",
     "morgan": "^1.11.0",
     "uuid": "^14.0.1"
   }

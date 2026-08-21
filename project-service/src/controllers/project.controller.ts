@@ -1,21 +1,38 @@
-import type { Request, Response } from "express"
-import { createPod, createService } from "../service/kubernetes.service.js"
-import { recordActivity } from "../service/activity.service.js"
-import { v4 as uuid } from "uuid"
+import type { NextFunction, Request, Response } from "express"
+import { AppError } from "../middlewares/error.middleware.js"
+import { createProject, launchProject } from "../service/project.service.js"
 
-export const createPodController = async (req: Request, res: Response) => {
+export async function createProjectController(req: Request, res: Response, next: NextFunction) {
+    try {
+        const title = typeof req.body?.title === "string" ? req.body.title.trim() : ""
 
-    const uniqueId = uuid()
+        if (!title || title.length > 120) {
+            throw new AppError(400, "Title must contain between 1 and 120 characters")
+        }
 
-    const podName = `nextjs-pod-${uniqueId}`
-    const serviceName = `nextjs-service-${uniqueId}`
+        const project = await createProject(req.user!.id, title)
 
-    await createPod(podName)
-    await createService(serviceName, podName)
-    await recordActivity(uniqueId)
+        res.status(201).json({ project })
+    } catch (error) {
+        next(error)
+    }
+}
 
-    res.status(200).json({
-        message: "Pod created successfully",
-        previewUrl: `http://${uniqueId}.preview.localhost`
-    })
+export async function launchProjectController(req: Request, res: Response, next: NextFunction) {
+    try {
+        const projectId = req.params.projectId
+
+        if (typeof projectId !== "string") {
+            throw new AppError(404, "Project not found")
+        }
+
+        const project = await launchProject(projectId, req.user!.id)
+
+        res.status(200).json({
+            message: "Project launched successfully",
+            project
+        })
+    } catch (error) {
+        next(error)
+    }
 }
