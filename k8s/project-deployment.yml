@@ -54,6 +54,11 @@ spec:
             secretKeyRef:
               name:  redis
               key:  REDIS_URL
+        - name:  MESSAGE_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name:  message-broker
+              key:  MESSAGE_BROKER_URL
         ports:
         - containerPort:  3000
           name:  http

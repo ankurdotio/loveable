@@ -2,7 +2,7 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
-function requiredEnv(name: "MONGODB_URI" | "ACCESS_TOKEN_SECRET"): string {
+function requiredEnv(name: "MONGODB_URI" | "ACCESS_TOKEN_SECRET" | "MESSAGE_BROKER_URL"): string {
     const value = process.env[name]
 
     if (!value?.trim()) {
@@ -21,5 +21,6 @@ if (!Number.isInteger(port) || port <= 0) {
 export const env = {
     PORT: port,
     MONGODB_URI: requiredEnv("MONGODB_URI"),
-    ACCESS_TOKEN_SECRET: requiredEnv("ACCESS_TOKEN_SECRET")
+    ACCESS_TOKEN_SECRET: requiredEnv("ACCESS_TOKEN_SECRET"),
+    MESSAGE_BROKER_URL: requiredEnv("MESSAGE_BROKER_URL"),
 }

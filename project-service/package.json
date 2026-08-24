@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^2.0.0",
+    "amqplib": "^2.0.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-http-proxy": "^2.1.2",
