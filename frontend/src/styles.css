@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope Variable", sans-serif;
+  --font-mono: "JetBrains Mono Variable", monospace;
+}
+
+:root {
+  font-family: "Manrope Variable", sans-serif;
+  color: #18181b;
+  background: #f5f6f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  letter-spacing: 0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+.auth-visual::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.auth-visual::after {
+  position: absolute;
+  right: -18%;
+  bottom: -18%;
+  width: 70%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(157, 131, 255, 0.28);
+  content: "";
+  transform: rotate(24deg);
+}
+
+::selection {
+  color: white;
+  background: #6e45ff;
+}
+
+.project-page ::selection,
+.workspace-shell ::selection {
+  background: #0e7490;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
+  min-height: 0;
+}
+
+.workspace-code-grid {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ide-scroll {
+  scrollbar-color: #3f3f46 transparent;
+  scrollbar-width: thin;
+}
+
+.ide-scroll::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.ide-scroll::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+@media (max-width: 900px) {
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .workspace-code-grid {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .workspace-shell {
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+
+  .workspace-shell > header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(520px, 65svh) minmax(420px, 55svh);
+    height: auto;
+  }
+
+  .workspace-grid > aside {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 0;
+  }
+
+  .workspace-code-grid {
+    grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .workspace-code-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 210px minmax(320px, 1fr);
+  }
+
+  .workspace-code-grid > aside {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
