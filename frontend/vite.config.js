@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [ react(), tailwindcss() ],
   server: {
     proxy: {
       '/api': {
@@ -16,7 +16,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/runtime\/[^/]+/, '') || '/',
         configure(proxy) {
           proxy.on('proxyReq', (proxyRequest, request) => {
-            const runtimeId = request.headers['x-runtime-id']
+            const runtimeId = request.headers[ 'x-runtime-id' ]
 
             if (typeof runtimeId === 'string' && runtimeId) {
               proxyRequest.setHeader('host', `${runtimeId}.file-system.localhost`)
