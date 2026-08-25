@@ -43,7 +43,7 @@ export async function launchProject(projectId: string, userId: string) {
         throw new AppError(409, "Project launch is already in progress")
     }
 
-    const runtimeId = uuid()
+    const runtimeId = project._id.toString()
     const podName = `nextjs-pod-${runtimeId}`
     const serviceName = `nextjs-service-${runtimeId}`
 

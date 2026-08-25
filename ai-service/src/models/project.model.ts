@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import type { InferSchemaType } from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
-    context: { type: String, required: true },
-    user: {
+    context: { type: String, default: "" },
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
     },
     projectId: {

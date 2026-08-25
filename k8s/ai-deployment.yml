@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  ai-deployment
+  labels:
+    name:  ai-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  ai
+  template:
+    metadata:
+      labels:
+        app:  ai
+    spec:
+      containers:
+      - image:  ai-service-image
+        imagePullPolicy: Always
+        name:  ai-service-container
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /_status/healthz
+            port: 3001
+          initialDelaySeconds: 90
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_status/healthz
+            port: 3001
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+        env:
+        - name:  ACCESS_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name:  auth
+              key:  ACCESS_TOKEN_SECRET    
+        - name:  MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name:  database
+              key:  AI_DB
+        - name:  MESSAGE_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name:  message-broker
+              key:  MESSAGE_BROKER_URL      
+        ports:
+        - containerPort:  3001
+          name:  ai-service-port
+      
