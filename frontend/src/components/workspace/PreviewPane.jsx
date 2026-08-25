@@ -5,7 +5,7 @@ export function PreviewPane({ previewUrl }) {
   const [frameKey, setFrameKey] = useState(0)
 
   return (
-    <section className="flex min-h-0 flex-col bg-[#111116] p-3">
+    <section className="flex h-full min-h-0 w-full flex-col bg-[#111116] p-3">
       <div className="flex h-10 shrink-0 items-center justify-between rounded-t-md border border-b-0 border-white/10 bg-[#202028] px-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="size-2 rounded-full bg-emerald-400" />
