@@ -2,6 +2,8 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
+process.env.LANGSMITH_TRACING = process.env.LANGSMITH_TRACING ?? "true"
+
 function requiredEnv(name: "MONGODB_URI" | "ACCESS_TOKEN_SECRET" | "MESSAGE_BROKER_URL" | "MISTRAL_API_KEY"): string {
     const value = process.env[name]
 

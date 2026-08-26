@@ -23,8 +23,10 @@ function getFileServer(config: ToolRuntime) {
         throw new Error("Pod ID is not configured");
     }
 
+    const baseUrl = `http://nextjs-service-${podId}`;
+
     return axios.create({
-        baseURL: `http://nextjs-service-${podId}`,
+        baseURL: `http://nextjs-service-${podId}:8000`,
     });
 }
 

@@ -1,7 +1,9 @@
 import { ChatMistralAI } from "@langchain/mistralai"
-import { createAgent, HumanMessage } from "langchain"
+import { createAgent, HumanMessage, AIMessage, ToolMessage, AIMessageChunk } from "langchain"
 import * as z from "zod"
 import { env } from "../../config/env.js"
+import { mainAgent } from "./fs.agent.js"
+
 
 
 
@@ -37,4 +39,30 @@ export async function getConversationTitle(message: string): Promise<string> {
     return response.structuredResponse.title
 
 }
+
+
+
+type MessageInConversation = HumanMessage | AIMessage | ToolMessage | AIMessageChunk
+
+/**
+ * @description accept the array of messages and return the streaming response from the AI
+ * @param messages array of messages
+ * @returns streaming response from the AI
+ */
+export async function handleUserMessage(messages: MessageInConversation[], projectId: string) {
+
+    const stream = await mainAgent.stream({
+        messages: messages,
+    }, {
+        configurable: {
+            podId: projectId
+        },
+        streamMode: ["messages", "values"],
+        timeout: 600000
+    })
+
+    return stream
+
+}
+
 

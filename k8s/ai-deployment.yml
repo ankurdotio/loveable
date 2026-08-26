@@ -52,7 +52,34 @@ spec:
           valueFrom:
             secretKeyRef:
               name:  message-broker
-              key:  MESSAGE_BROKER_URL      
+              key:  MESSAGE_BROKER_URL    
+        - name: MISTRAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name:  ai
+              key:  MISTRAL_API_KEY
+
+        - name: LANGSMITH_TRACING
+          valueFrom:
+            secretKeyRef:
+              name:  ai
+              key:  LANGSMITH_TRACING
+        - name: LANGSMITH_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name:  ai
+              key:  LANGSMITH_ENDPOINT
+        - name: LANGSMITH_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name:  ai  
+              key:  LANGSMITH_API_KEY
+        - name: LANGSMITH_PROJECT
+          valueFrom:
+            secretKeyRef: 
+              name:  ai
+              key:  LANGSMITH_PROJECT
+        
         ports:
         - containerPort:  3001
           name:  ai-service-port

@@ -2,6 +2,7 @@ import { createAgent } from "langchain";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { env } from "../../config/env.js";
 import { fileTools } from "./fs.tool.js";
+import { mainAgentInstruction } from "./fs.instruction.js";
 
 
 const model = new ChatMistralAI({
@@ -9,8 +10,11 @@ const model = new ChatMistralAI({
     apiKey: env.MISTRAL_API_KEY,
 })
 
-const agent = createAgent({
+const mainAgent = createAgent({
     model,
     tools: [...fileTools],
-    systemPrompt: ``
+    systemPrompt: mainAgentInstruction
 })
+
+
+export { mainAgent }
