@@ -13,7 +13,7 @@ spec:
   ingressClassName: nginx
   rules:
 
-  - host: "*.preview.localhost"
+  - host: "*.preview.cryboy.in"
     http:
       paths:
       - pathType: Prefix
@@ -24,7 +24,7 @@ spec:
             port:
               number: 80
               
-  - host: "*.file-system.localhost"
+  - host: "*.file-system.cryboy.in"
     http:
       paths:
       - pathType: Prefix
@@ -34,32 +34,44 @@ spec:
             name: project-service
             port:
               number: 80
-  - http:
+
+
+  - host: "www.cryboy.in"
+    http:
       paths:
       - pathType: Prefix
         path: "/api/auth"
         backend:
           service:
             name: auth-service
-            port: 
+            port:
               number: 80
-  - http:
-      paths:
       - pathType: Prefix
         path: "/api/projects"
         backend:
           service:
             name: project-service
-            port: 
+            port:
               number: 80
-  - http:
-      paths:
       - pathType: Prefix
         path: "/api/ai"
         backend:
           service:
             name: ai-service
-            port: 
+            port:
               number: 80
+              
+  - host: "cryboy.in"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/api/auth"
+        backend: { service: { name: auth-service, port: { number: 80 } } }
+      - pathType: Prefix
+        path: "/api/projects"
+        backend: { service: { name: project-service, port: { number: 80 } } }
+      - pathType: Prefix
+        path: "/api/ai"
+        backend: { service: { name: ai-service, port: { number: 80 } } }
 
   

@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: resource-manager
       containers:
-      - image:  project-service-image
+      - image:  329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/project-service
         name:  project-main-container 
         imagePullPolicy: Always
         resources:

@@ -1,12 +1,12 @@
 import { apiRequest } from './client.js'
 
-function runtimePath(runtimeId, path) {
-    if (!runtimeId) {
-        throw new Error('The project runtime is not available yet.')
-    }
+// function runtimePath(runtimeId, path) {
+//     if (!runtimeId) {
+//         throw new Error('The project runtime is not available yet.')
+//     }
 
-    return `/runtime/${encodeURIComponent(runtimeId)}${path}`
-}
+//     return `/runtime/${encodeURIComponent(runtimeId)}${path}`
+// }
 
 function normalizePath(value) {
     const path = value.trim().replaceAll('\\', '/').replace(/\/{2,}/g, '/')
@@ -19,7 +19,7 @@ function filesQuery(paths) {
 }
 
 async function runtimeRequest(runtimeId, path, options) {
-    return apiRequest(runtimePath(runtimeId, path), {
+    return apiRequest(`${runtimeId}.file-system.cryboy.in${path}`, {
         ...options,
         auth: false,
         headers: {

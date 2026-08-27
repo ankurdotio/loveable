@@ -15,7 +15,7 @@ spec:
         app:  auth
     spec:
       containers:
-      - image:  auth-image
+      - image:  329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/auth-service
         name:  auth-main
         imagePullPolicy: Always
         resources:

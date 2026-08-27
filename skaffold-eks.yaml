@@ -1,0 +1,53 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+
+build:
+  tagPolicy:
+    sha256: {}
+
+  platforms:
+    - linux/amd64        # EKS t3.medium nodes are x86_64 — Mac M1/M2/M3 must cross-build
+
+  artifacts:
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/ai-service
+      context: ai-service
+      docker:
+        dockerfile: dockerfile
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/auth-service
+      context: auth-service
+      docker:
+        dockerfile: Dockerfile
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/project-service
+      context: project-service
+      docker:
+        dockerfile: dockerfile
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/express-file-server
+      context: express-file-server
+      docker:
+        dockerfile: dockerfile
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/nextjs-boilerplate
+      context: nextjs-boilerplate
+      docker:
+        dockerfile: dockerfile
+
+    - image: 329599656829.dkr.ecr.ap-southeast-1.amazonaws.com/sync-service
+      context: sync-service
+      docker:
+        dockerfile: dockerfile
+
+manifests:
+  rawYaml:
+    - k8s/ai-deployment.yml
+    - k8s/ai-service.yml
+    - k8s/auth-deployment.yml
+    - k8s/auth-service.yml
+    - k8s/project-deployment.yml
+    - k8s/project-service.yml
+    - k8s/ingress.yml
+    - k8s/rbac.yml
+    - k8s/secrets.yml
