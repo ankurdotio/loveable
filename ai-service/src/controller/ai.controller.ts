@@ -5,139 +5,278 @@ import type { NextFunction, Request, Response } from "express";
 import { getConversationTitle } from "../service/ai/ai.service.js";
 import { handleUserMessage } from "../service/ai/ai.service.js";
 import { HumanMessage, AIMessage, ToolMessage, AIMessageChunk } from "langchain";
+import { AppError } from "../middlewares/error.middleware.js";
 
-
-export async function handleMessageController(req: Request, res: Response, next: NextFunction) {
-
-    const user = req.user;
-    let conversation = null;
-
-    if (!user) {
-        return res.status(401).json({ error: "Unauthorized" });
+/** Resolves the ai-service project record the caller is allowed to use. */
+async function requireProject(userId: string, projectId: unknown) {
+    if (typeof projectId !== "string" || !projectId.trim()) {
+        throw new AppError(400, "projectId is required");
     }
 
-    const project = await ProjectModel.findOne({ projectId: req.body.projectId, userId: user.id });
+    const project = await ProjectModel.findOne({ projectId, userId }).catch(() => null);
 
     if (!project) {
-        return res.status(404).json({ error: "Project not found" });
+        throw new AppError(404, "Project not found");
     }
 
+    return project;
+}
 
-    if (req.body.conversationId) {
-        conversation = await ConversationModel.findOne({ _id: req.body.conversationId });
+/** Resolves a conversation the caller owns. */
+async function requireConversation(userId: string, conversationId: string) {
+    const conversation = await ConversationModel.findById(conversationId).catch(() => null);
 
-        if (!conversation) {
-            return res.status(404).json({ error: "Conversation not found" });
-        }
+    if (!conversation || conversation.user?.toString() !== userId) {
+        throw new AppError(404, "Conversation not found");
+    }
 
-        if (conversation.project?.toString() !== project.id) {
-            return res.status(403).json({ error: "Conversation does not belong to the project" });
-        }
+    return conversation;
+}
 
-        if (conversation.user?.toString() !== user.id) {
-            return res.status(403).json({ error: "Conversation does not belong to the user" });
-        }
-    } else {
+/**
+ * GET /api/ai/projects/:projectId/conversations
+ */
+export async function listConversationsController(req: Request, res: Response, next: NextFunction) {
+    try {
+        const project = await requireProject(req.user!.id, req.params.projectId);
 
-        const title = await getConversationTitle(req.body.content);
-
-        conversation = await ConversationModel.create({
-            title,
+        const conversations = await ConversationModel.find({
             project: project.id,
-            user: user.id
-        })
+            user: req.user!.id
+        }).sort({ updatedAt: -1 });
+
+        res.json({
+            conversations: conversations.map(conversation => ({
+                _id: conversation.id,
+                title: conversation.title,
+                createdAt: conversation.createdAt,
+                updatedAt: conversation.updatedAt
+            }))
+        });
+    } catch (error) {
+        next(error);
     }
+}
 
+/**
+ * POST /api/ai/projects/:projectId/conversations
+ * req.body = { title?: string }
+ */
+export async function createConversationController(req: Request, res: Response, next: NextFunction) {
+    try {
+        const project = await requireProject(req.user!.id, req.params.projectId);
+        const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
 
-    // –––––––––––––––––––– Conversation Headers –––––––––––––––––––
-    res.setHeader('X-Conversation-Id', conversation.id);
-    res.setHeader('X-Conversation-Title', conversation.title);
-    res.setHeader('Access-Control-Expose-Headers', 'X-Conversation-Id, X-Conversation-Title');
+        const conversation = await ConversationModel.create({
+            title: title || "New conversation",
+            project: project.id,
+            user: req.user!.id
+        });
 
-
-    // ––––––––––––––––––– SSE Headers –––––––––––––––––––
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-
-
-    await MessageModel.create({
-        conversationId: conversation.id,
-        author: "user",
-        content: req.body.content,
-        toolCalls: []
-    })
-
-    const messages = await MessageModel.find({ conversationId: conversation.id })
-
-    const stream = await handleUserMessage(
-        messages.map(message => {
-            if (message.author === "user") {
-                return new HumanMessage(message.content || "")
+        res.status(201).json({
+            conversation: {
+                _id: conversation.id,
+                title: conversation.title,
+                createdAt: conversation.createdAt,
+                updatedAt: conversation.updatedAt
             }
-            if (message.author === "ai") {
-                return new AIMessage({
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * GET /api/ai/conversations/:conversationId/messages
+ *
+ * Only user prompts and assistant prose are returned; tool calls and tool
+ * results are internal agent bookkeeping and never reach the client.
+ */
+export async function listMessagesController(req: Request, res: Response, next: NextFunction) {
+    try {
+        const conversation = await requireConversation(req.user!.id, String(req.params.conversationId));
+
+        const messages = await MessageModel.find({
+            conversationId: conversation.id,
+            author: { $in: ["user", "ai"] }
+        }).sort({ createdAt: 1 });
+
+        res.json({
+            conversation: { _id: conversation.id, title: conversation.title },
+            messages: messages
+                .filter(message => (message.content || "").trim().length > 0)
+                .map(message => ({
+                    _id: message.id,
+                    author: message.author,
                     content: message.content || "",
-                    tool_calls: message.toolCalls?.map(toolCall => {
-                        return {
-                            id: toolCall.id || "",
-                            name: toolCall.name || "",
-                            args: toolCall.arguments || {}
-                        }
-                    })
-                })
-            }
+                    createdAt: message.createdAt
+                }))
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 
+/** Writes one JSON-encoded SSE event. */
+function sendEvent(res: Response, payload: Record<string, unknown>) {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
 
-            return new ToolMessage({
-                content: message.content || "",
-                tool_call_id: message.toolCallId || "",
-                name: message.toolCalls?.[0]?.name || "",
-            })
+/** Turns transport/model failures into something a user can act on. */
+function errorMessage(error: unknown) {
+    if (error instanceof AppError) return error.message;
 
-        }), project.projectId?.toString() || "");
+    const raw = error instanceof Error ? error.message : String(error);
 
-    for await (const [mode, data] of stream) {
-
-        if (mode === "messages") {
-
-            const [token, metadata] = data;
-
-            res.write(`data: ${token.text}\n\n`);
-        } else if (mode === "values") {
-            // console.log("Received values:", data);
-
-            const currentStateMessages = data.messages
-
-            const newMessage = currentStateMessages.at(-1);
-
-            console.log("New message:", newMessage);
-
-            if (newMessage instanceof AIMessageChunk) {
-                await MessageModel.create({
-                    conversationId: conversation.id,
-                    author: "ai",
-                    content: newMessage.text,
-                    toolCalls: newMessage.tool_calls?.map(toolCall => {
-                        return {
-                            id: toolCall.id || "",
-                            name: toolCall.name || "",
-                            arguments: toolCall.args || {}
-                        }
-                    }) || []
-                });
-            } else if (newMessage instanceof ToolMessage) {
-                await MessageModel.create({
-                    conversationId: conversation.id,
-                    author: "tool",
-                    content: String(newMessage.content) || "",
-                    toolCallId: newMessage.tool_call_id || "",
-                });
-            }
-
-        }
+    if (/timeout|ETIMEDOUT|ESOCKETTIMEDOUT|AbortError/i.test(raw)) {
+        return "The AI request timed out. Please try again.";
     }
 
-    res.end();
+    if (/ECONNREFUSED|ENOTFOUND|EAI_AGAIN|socket hang up/i.test(raw)) {
+        return "Could not reach your project runtime. Make sure the preview is running and try again.";
+    }
+
+    if (/rate.?limit|\b429\b/i.test(raw)) {
+        return "The AI model is rate limited right now. Please retry in a few moments.";
+    }
+
+    return raw || "The AI service failed to complete this request.";
+}
+
+/**
+ * POST /api/ai/message
+ * req.body = { content: string, conversationId?: string, projectId: string }
+ *
+ * Streams SSE events shaped as `{ type: "meta" | "token" | "done" | "error" }`.
+ */
+export async function handleMessageController(req: Request, res: Response, next: NextFunction) {
+    let conversation = null;
+
+    try {
+        const user = req.user!;
+        const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
+
+        if (!content) {
+            throw new AppError(400, "content is required");
+        }
+
+        const project = await requireProject(user.id, req.body?.projectId);
+
+        if (req.body.conversationId) {
+            conversation = await requireConversation(user.id, req.body.conversationId);
+
+            if (conversation.project?.toString() !== project.id) {
+                throw new AppError(403, "Conversation does not belong to the project");
+            }
+        } else {
+            const title = await getConversationTitle(content).catch(() => content.slice(0, 60));
+
+            conversation = await ConversationModel.create({
+                title,
+                project: project.id,
+                user: user.id
+            });
+        }
+
+        // ––––––––––––––––––– SSE headers –––––––––––––––––––
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+        res.flushHeaders?.();
+
+        sendEvent(res, {
+            type: "meta",
+            conversationId: conversation.id,
+            title: conversation.title
+        });
+
+        await MessageModel.create({
+            conversationId: conversation.id,
+            author: "user",
+            content,
+            toolCalls: []
+        });
+
+        const history = await MessageModel.find({ conversationId: conversation.id }).sort({ createdAt: 1 });
+
+        const stream = await handleUserMessage(
+            history.map(message => {
+                if (message.author === "user") {
+                    return new HumanMessage(message.content || "")
+                }
+                if (message.author === "ai") {
+                    return new AIMessage({
+                        content: message.content || "",
+                        tool_calls: message.toolCalls?.map(toolCall => {
+                            return {
+                                id: toolCall.id || "",
+                                name: toolCall.name || "",
+                                args: toolCall.arguments || {}
+                            }
+                        })
+                    })
+                }
+
+
+                return new ToolMessage({
+                    content: message.content || "",
+                    tool_call_id: message.toolCallId || "",
+                    name: message.toolCalls?.[0]?.name || "",
+                })
+
+            }), project.projectId?.toString() || "");
+
+        for await (const [mode, data] of stream) {
+
+            if (mode === "messages") {
+
+                const [token] = data;
+
+                // Tool-call chunks carry no prose, so only assistant text is forwarded.
+                if (token.text) {
+                    sendEvent(res, { type: "token", value: token.text });
+                }
+            } else if (mode === "values") {
+
+                const newMessage = data.messages.at(-1);
+
+                if (newMessage instanceof AIMessageChunk) {
+                    await MessageModel.create({
+                        conversationId: conversation.id,
+                        author: "ai",
+                        content: newMessage.text,
+                        toolCalls: newMessage.tool_calls?.map(toolCall => {
+                            return {
+                                id: toolCall.id || "",
+                                name: toolCall.name || "",
+                                arguments: toolCall.args || {}
+                            }
+                        }) || []
+                    });
+                } else if (newMessage instanceof ToolMessage) {
+                    await MessageModel.create({
+                        conversationId: conversation.id,
+                        author: "tool",
+                        content: String(newMessage.content) || "",
+                        toolCallId: newMessage.tool_call_id || "",
+                    });
+                }
+
+            }
+        }
+
+        await ConversationModel.updateOne({ _id: conversation.id }, { $set: { updatedAt: new Date() } });
+
+        sendEvent(res, { type: "done" });
+        res.end();
+    } catch (error) {
+        if (!res.headersSent) {
+            return next(error);
+        }
+
+        console.error(error);
+        sendEvent(res, { type: "error", message: errorMessage(error) });
+        res.end();
+    }
 }

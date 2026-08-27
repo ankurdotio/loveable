@@ -14,6 +14,10 @@ export function setAccessToken(token) {
     accessToken = token || null
 }
 
+export function getAccessToken() {
+    return accessToken
+}
+
 async function parseResponse(response) {
     const contentType = response.headers.get('content-type') || ''
     const payload = contentType.includes('application/json')

@@ -18,19 +18,21 @@ Vite proxies `/api/*` to `http://localhost`. Runtime file requests use
 `/runtime/:runtimeId/*`; the proxy removes that prefix and sets the request
 host to `:runtimeId.file-system.localhost` for the wildcard ingress.
 
-## AI API skeleton
+## AI API
 
-AI calls are disabled until the AI service exposes routes. Enable the prepared
-client by setting:
+AI calls are enabled by default. Set `VITE_ENABLE_AI_API=false` to run the
+workspace without the AI service.
 
-```bash
-VITE_ENABLE_AI_API=true
-```
+The client uses:
 
-The client expects project conversations at
-`/api/ai/projects/:projectId/conversations` and messages at
-`/api/ai/conversations/:conversationId/messages`. These shapes match the
-conversation and message models in `ai-service`.
+- `GET /api/ai/projects/:projectId/conversations` — conversation list
+- `POST /api/ai/projects/:projectId/conversations` — create a conversation
+- `GET /api/ai/conversations/:conversationId/messages` — message history
+  (user and assistant messages only; tool calls stay server side)
+- `POST /api/ai/message` — streams one agent turn as SSE events shaped
+  `{ type: 'meta' | 'token' | 'done' | 'error' }`
+
+Assistant messages are rendered as Markdown via `react-markdown`.
 
 ## Checks
 

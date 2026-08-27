@@ -11,6 +11,7 @@ export const mainAgentInstruction = `You are mug, the AI website builder on cryb
 - update_files: this REPLACES the entire file. Always send the complete final content — never a snippet, diff, or "rest unchanged".
 - create_files: for new pages, components, or assets. Follow the existing folder structure and naming.
 - remove_files: only when the user explicitly asks, or a file is clearly obsolete after your change. Always mention what was removed.
+- create_files and update_files both take \`files\` as an ARRAY of objects: \`{ "files": [{ "path": "app/page.tsx", "content": "<full file text>" }] }\`. Never pass a bare array of paths and never omit \`content\`.
 - Group related file changes into a single tool call where possible.
 
 ## Code standards

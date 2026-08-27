@@ -1,6 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
 import router from './index.routes.js';
+import { errorHandler } from '../middlewares/error.middleware.js';
 
 
 const app = express();
@@ -23,5 +24,7 @@ app.get("/_status/readyz", (req, res) => {
     });
 });
 
+
+app.use(errorHandler);
 
 export default app;
